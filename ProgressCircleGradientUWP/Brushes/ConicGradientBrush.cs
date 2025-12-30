@@ -14,10 +14,8 @@ namespace ProgressCircleGradient.Brushes
 {
     public sealed partial class ConicGradientBrush : XamlCompositionBrushBase
     {
-        // Render 1 texture vuông rồi Stretch.Fill ra kích thước control
         private const int FixedResolution = 2048;
 
-        // Offset theo yêu cầu/thiết kế trước đây của bạn
         private const float InitialAngleOffset = -46.2f;
 
         private Compositor? _compositor;
@@ -25,28 +23,21 @@ namespace ProgressCircleGradient.Brushes
         private CompositionDrawingSurface? _surface;
         private CompositionSurfaceBrush? _surfaceBrush;
 
-        private struct Stop
+        private struct Stop(float angleDeg, byte a, byte r, byte g, byte b)
         {
-            public float AngleDeg;
-            public byte A, R, G, B;
-
-            public Stop(float angleDeg, byte a, byte r, byte g, byte b)
-            {
-                AngleDeg = angleDeg;
-                A = a; R = r; G = g; B = b;
-            }
+            public float AngleDeg = angleDeg;
+            public byte A = a, R = r, G = g, B = b;
         }
 
-        // (Giữ nguyên stops như file bạn đưa)
-        private static readonly Stop[] Stops = new Stop[]
-        {
-            new Stop(25.2f, 0x99, 0x38, 0x7A, 0xFF),
-            new Stop(72.0f, 0xE6, 0x3C, 0xB9, 0xA2),
-            new Stop(136.8f, 0xE6, 0x3D, 0xCC, 0x87),
-            new Stop(208.8f, 0xE6, 0x38, 0x7A, 0xFF),
-            new Stop(306.0f, 0x99, 0x3B, 0xA3, 0xC3),
-            new Stop(345.6f, 0x99, 0x3D, 0xCC, 0x87),
-        };
+        private static readonly Stop[] Stops =
+        [
+            new(25.2f, 0x99, 0x38, 0x7A, 0xFF),
+            new(72.0f, 0xE6, 0x3C, 0xB9, 0xA2),
+            new(136.8f, 0xE6, 0x3D, 0xCC, 0x87),
+            new(208.8f, 0xE6, 0x38, 0x7A, 0xFF),
+            new(306.0f, 0x99, 0x3B, 0xA3, 0xC3),
+            new(345.6f, 0x99, 0x3D, 0xCC, 0x87),
+        ];
 
         protected override void OnConnected()
         {
@@ -123,19 +114,15 @@ namespace ProgressCircleGradient.Brushes
 
             var device = CanvasDevice.GetSharedDevice();
 
-            using (var bitmap = CanvasBitmap.CreateFromBytes(
+            using var bitmap = CanvasBitmap.CreateFromBytes(
                 device,
                 bytes,
                 FixedResolution,
                 FixedResolution,
-                DirectXPixelFormat.B8G8R8A8UIntNormalized))
-            {
-                using (var ds = CanvasComposition.CreateDrawingSession(_surface))
-                {
-                    ds.Clear(Windows.UI.Colors.Transparent);
-                    ds.DrawImage(bitmap);
-                }
-            }
+                DirectXPixelFormat.B8G8R8A8UIntNormalized);
+            using var ds = CanvasComposition.CreateDrawingSession(_surface);
+            ds.Clear(Colors.Transparent);
+            ds.DrawImage(bitmap);
         }
 
         /// <summary>
@@ -152,8 +139,7 @@ namespace ProgressCircleGradient.Brushes
             float angleDeg = rad * (180f / (float)Math.PI);
             angleDeg = Mod360(angleDeg + InitialAngleOffset);
 
-            byte a, rP, gP, bP;
-            EvaluateColorAtAnglePremultiplied(angleDeg, out a, out rP, out gP, out bP);
+            EvaluateColorAtAnglePremultiplied(angleDeg, out byte a, out byte rP, out byte gP, out byte bP);
 
             if (a == 0)
                 return Colors.Transparent;

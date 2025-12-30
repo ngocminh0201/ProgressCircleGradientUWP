@@ -2,12 +2,12 @@
     x:Class="ProgressCircleGradientUWP.MainPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:OneUI2="using:ProgressCircleGradient.Controls.ProgressBar"
     xmlns:brushes="using:ProgressCircleGradient.Brushes"
     xmlns:controls="using:ProgressCircleGradient.Controls.ProgressCircle"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="using:ProgressCircleGradientUWP"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:progressbar="using:ProgressCircleGradient.Controls.ProgressBar"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
     mc:Ignorable="d">
 
@@ -51,5 +51,112 @@
         </StackPanel>
 
         <!--  Phần 2: Grid 2 cột cho ProgressBar và ProgressCircle  -->
+        <Grid Margin="0,10,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="24" />
+                <!--  separator column  -->
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!--  Cột 1: ProgressBar  -->
+            <StackPanel
+                Grid.Column="0"
+                Margin="0,0,20,0"
+                HorizontalAlignment="Center"
+                Orientation="Vertical"
+                Spacing="32">
+                <!--  ProgressBar Determinate bình thường  -->
+                <StackPanel Orientation="Vertical" Spacing="10">
+                    <TextBlock
+                        FontSize="15"
+                        FontWeight="Bold"
+                        Text="ProgressBar Determinate" />
+                    <StackPanel
+                        VerticalAlignment="Center"
+                        Orientation="Horizontal"
+                        Spacing="16">
+                        <OneUI2:ProgressBar
+                            x:Name="pbDeterminate"
+                            Width="360"
+                            Height="20"
+                            Background="#1917171A"
+                            Foreground="#387AFF"
+                            IsIndeterminate="False"
+                            Value="50" />
+                        <Slider
+                            Width="220"
+                            VerticalAlignment="Center"
+                            Maximum="100"
+                            Minimum="1"
+                            Value="{Binding Value, ElementName=pbDeterminate, Mode=TwoWay}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!--  ProgressBar Determinate với ConicGradientBrush  -->
+                <StackPanel Orientation="Vertical" Spacing="10">
+                    <TextBlock
+                        FontSize="15"
+                        FontWeight="Bold"
+                        Text="ProgressBar Determinate + ConicGradient" />
+                    <StackPanel
+                        VerticalAlignment="Center"
+                        Orientation="Horizontal"
+                        Spacing="16">
+                        <OneUI2:ProgressBar
+                            x:Name="pbDeterminateConic"
+                            Width="360"
+                            Height="20"
+                            Background="#1917171A"
+                            IsIndeterminate="False"
+                            Value="50" />
+                        <Slider
+                            Width="220"
+                            VerticalAlignment="Center"
+                            Maximum="100"
+                            Minimum="1"
+                            Value="{Binding Value, ElementName=pbDeterminateConic, Mode=TwoWay}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!--  ProgressBar Indeterminate bình thường  -->
+                <StackPanel Orientation="Vertical" Spacing="10">
+                    <TextBlock
+                        FontSize="15"
+                        FontWeight="Bold"
+                        Text="ProgressBar Indeterminate" />
+                    <OneUI2:ProgressBar
+                        Width="360"
+                        Height="20"
+                        Background="#1917171A"
+                        Foreground="#387AFF"
+                        IsIndeterminate="True"
+                        Value="100" />
+                </StackPanel>
+
+                <!--  ProgressBar Indeterminate với ConicGradientBrush  -->
+                <StackPanel Orientation="Vertical" Spacing="10">
+                    <TextBlock
+                        FontSize="15"
+                        FontWeight="Bold"
+                        Text="ProgressBar Indeterminate + ConicGradient" />
+                    <OneUI2:ProgressBar
+                        Width="360"
+                        Height="20"
+                        Background="#1917171A"
+                        IsIndeterminate="True"
+                        Value="100" />
+                </StackPanel>
+            </StackPanel>
+
+            <!--  Separator  -->
+            <Border
+                Grid.Column="1"
+                Width="2"
+                Margin="0,8"
+                VerticalAlignment="Stretch"
+                Background="#2E2E2E"
+                CornerRadius="1" />
+        </Grid>
     </StackPanel>
 </Page>
