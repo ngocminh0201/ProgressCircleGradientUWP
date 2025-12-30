@@ -81,16 +81,15 @@ namespace ProgressCircleGradient.Brushes
             _compositor = null;
         }
 
-        private static Compositor GetCompositorForUwp()
+        private static Compositor? GetCompositorForUwp()
         {
-            // UWP có Window.Current.Compositor (đúng chuẩn cho XamlCompositionBrushBase)
-            // :contentReference[oaicite:2]{index=2}
+            // UWP: Window.Current.Compositor is the intended compositor for XamlCompositionBrushBase.
             var w = Window.Current;
             if (w != null)
                 return w.Compositor;
 
-            // Fallback (hiếm khi cần)
-            var root = w?.Content as UIElement;
+            // Fallback (rare)
+            var root = Window.Current?.Content as UIElement;
             if (root != null)
                 return ElementCompositionPreview.GetElementVisual(root).Compositor;
 
@@ -99,6 +98,9 @@ namespace ProgressCircleGradient.Brushes
 
         private void CreateSurface()
         {
+            if (_graphicsDevice == null)
+                return;
+
             _surface = _graphicsDevice.CreateDrawingSurface(
                 new Size(FixedResolution, FixedResolution),
                 DirectXPixelFormat.B8G8R8A8UIntNormalized,
@@ -121,12 +123,12 @@ namespace ProgressCircleGradient.Brushes
                 FixedResolution,
                 DirectXPixelFormat.B8G8R8A8UIntNormalized);
             using var ds = CanvasComposition.CreateDrawingSession(_surface);
-            ds.Clear(Colors.Transparent);
-            ds.DrawImage(bitmap);
+                ds.Clear(Colors.Transparent);
+                ds.DrawImage(bitmap);
         }
 
         /// <summary>
-        /// Sample màu tại 1 điểm (phục vụ logic “xuyên xuống brush” / hit-test / mapping value->màu).
+        /// Sample a color at a point (useful for "punch-through" mapping logic).
         /// </summary>
         public static Color SampleColorAtPoint(Point point, double centerX, double centerY)
         {
@@ -176,8 +178,7 @@ namespace ProgressCircleGradient.Brushes
                     float angleDeg = rad * (180f / (float)Math.PI);
                     angleDeg = Mod360(angleDeg + InitialAngleOffset);
 
-                    byte a, rP, gP, bP;
-                    EvaluateColorAtAnglePremultiplied(angleDeg, out a, out rP, out gP, out bP);
+                    EvaluateColorAtAnglePremultiplied(angleDeg, out byte a, out byte rP, out byte gP, out byte bP);
 
                     // BGRA premultiplied
                     buffer[idx++] = bP;

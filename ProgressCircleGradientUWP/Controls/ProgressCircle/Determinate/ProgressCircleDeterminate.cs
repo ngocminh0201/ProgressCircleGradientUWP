@@ -2,29 +2,37 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Windows.Foundation;
 using Windows.UI.Composition;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Hosting;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Shapes;
+
+using Microsoft.Graphics.Canvas;
+using Microsoft.Graphics.Canvas.Geometry;
+
 using ProgressCircleGradient.Controls.ProgressCircle.Determinate;
 using ProgressCircleGradient.Helpers;
-using Windows.Foundation;
 
 namespace ProgressCircleGradient.Controls.ProgressCircle
 {
     public partial class ProgressCircleDeterminate : ProgressCircle
     {
         #region Constants
-        private const double RADIANS = Math.PI / 180;
+        private const double RADIANS = Math.PI / 180.0;
+
         private const string PART_COLOR_GRID_NAME = "PART_ColorGrid";
         private const string PART_TEXT_NAME = "PART_text";
         private const string PART_CANVAS = "PART_canvas";
+
         private const string PART_OUTER_PATH = "PART_OuterPath";
         private const string PART_OUTER_PATH_FIGURE = "PART_OuterPathFigure";
         private const string PART_OUTER_ARC_SEGMENT = "PART_OuterArcSegment";
+
         private const string PART_GRADIENT_LAYER = "PART_GradientLayer";
+
         private const string PART_INNER_PATH = "PART_InnerPath";
         private const string PART_INNER_PATH_FIGURE = "PART_InnerPathFigure";
         private const string PART_INNER_ARC_SEGMENT = "PART_InnerArcSegment";
@@ -44,19 +52,30 @@ namespace ProgressCircleGradient.Controls.ProgressCircle
 
         #region Variables
         private Canvas _canvas;
+
         private Path _outerPath;
         private PathFigure _outerPathFigure;
         private ArcSegment _outerArc;
+
         private Rectangle _gradientLayer;
         private Visual _gradientVisual;
         private Compositor _compositor;
         private CompositionPathGeometry _clipPathGeometry;
         private CompositionGeometricClip _geometricClip;
+
+        // Keep the current clip geometry alive while the compositor uses it.
+        private CanvasGeometry _clipCanvasGeometry;
+        private CanvasStrokeStyle _clipStrokeStyle;
+        private float _lastClipAngle = -1f;
+        private float _lastClipRadius = -1f;
+        private float _lastClipThickness = -1f;
+
         private Path _innerPath;
         private PathFigure _innerPathFigure;
         private ArcSegment _innerArc;
         private EllipseGeometry _startEllipse;
         private EllipseGeometry _endEllipse;
+
         private TextBlock _text;
 
         private readonly List<ProgressCircleDeterminateModel> _progressCircleDeterminateModels = new()
@@ -136,6 +155,7 @@ namespace ProgressCircleGradient.Controls.ProgressCircle
         public ProgressCircleDeterminate()
         {
             DefaultStyleKey = typeof(ProgressCircleDeterminate);
+            Unloaded += ProgressCircleDeterminate_Unloaded;
         }
         #endregion
 
@@ -159,6 +179,9 @@ namespace ProgressCircleGradient.Controls.ProgressCircle
             _innerArc = GetTemplateChild(PART_INNER_ARC_SEGMENT) as ArcSegment;
             _startEllipse = GetTemplateChild(PART_START_ELLIPSE) as EllipseGeometry;
             _endEllipse = GetTemplateChild(PART_END_ELLIPSE) as EllipseGeometry;
+
+            // Reset cached clip so the first Draw() always builds a correct path for the new template instance.
+            _lastClipAngle = _lastClipRadius = _lastClipThickness = -1f;
 
             EnsureGradientClip();
             SetControlSize();
@@ -211,6 +234,17 @@ namespace ProgressCircleGradient.Controls.ProgressCircle
             if (pc._outerPath != null)
                 pc._outerPath.Stroke = (Brush)e.NewValue;
         }
+
+        private static void OnTypePropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is ProgressCircleDeterminate pc)
+                pc.UpdateSize();
+        }
+
+        private void ProgressCircleDeterminate_Unloaded(object sender, RoutedEventArgs e)
+        {
+            DisposeClipGeometry();
+        }
         #endregion
 
         #region Private Methods
@@ -229,6 +263,22 @@ namespace ProgressCircleGradient.Controls.ProgressCircle
             _gradientVisual.Clip = _geometricClip;
         }
 
+        private void DisposeClipGeometry()
+        {
+            try
+            {
+                _clipCanvasGeometry?.Dispose();
+            }
+            catch
+            {
+                // ignore; we don't want teardown to crash the app
+            }
+            finally
+            {
+                _clipCanvasGeometry = null;
+            }
+        }
+
         private void Draw()
         {
             if (_canvas == null)
@@ -239,13 +289,20 @@ namespace ProgressCircleGradient.Controls.ProgressCircle
 
             UpdateTrackGeometry(center, Radius);
 
+            // If the template contains PART_GradientLayer, we render the "progress" via:
+            // (1) fill the rectangle with Foreground (e.g. ConicGradientBrush),
+            // (2) clip it to the arc segment that corresponds to Value.
             if (_gradientLayer != null)
             {
                 UpdateGradientClip(center, Radius, angle);
-                if (_innerPath != null) _innerPath.Visibility = Visibility.Collapsed;
+
+                if (_innerPath != null)
+                    _innerPath.Visibility = Visibility.Collapsed;
+
                 return;
             }
 
+            // Fallback for templates without gradient layer
             if (_innerPath == null || _innerPathFigure == null || _innerArc == null)
                 return;
 
@@ -293,10 +350,10 @@ namespace ProgressCircleGradient.Controls.ProgressCircle
         {
             double v = Math.Clamp(Value, 0, 100);
 
-            if (v <= 0) 
+            if (v <= 0)
                 return 0;
 
-            if (v >= 100) 
+            if (v >= 100)
                 return 360.0;
 
             double angle = v * CIRCLE_CENTER_TO_BORDER_CORRECTION_FACTOR / 100.0 * 360.0;
@@ -329,33 +386,82 @@ namespace ProgressCircleGradient.Controls.ProgressCircle
             {
                 _gradientLayer.Visibility = Visibility.Collapsed;
                 _clipPathGeometry.Path = null;
+
+                DisposeClipGeometry();
+                _lastClipAngle = _lastClipRadius = _lastClipThickness = -1f;
                 return;
             }
 
             _gradientLayer.Visibility = Visibility.Visible;
 
-            // Simplified implementation without Canvas support for UWP .NET 9
-            // Create basic arc path geometry
-            var circleStart = new Point(centerPoint.X, centerPoint.Y - radius);
-            var endPoint = ScaleUnitCirclePoint(centerPoint, angle, radius);
+            float angleF = (float)angle;
+            float radiusF = (float)radius;
+            float thicknessF = (float)Thickness;
 
-            var pathFigure = new PathFigure();
-            pathFigure.StartPoint = circleStart;
-            pathFigure.IsClosed = false;
+            // Avoid re-allocating COM geometries if nothing changed.
+            if (_clipCanvasGeometry != null &&
+                Math.Abs(angleF - _lastClipAngle) < 0.0001f &&
+                Math.Abs(radiusF - _lastClipRadius) < 0.0001f &&
+                Math.Abs(thicknessF - _lastClipThickness) < 0.0001f)
+            {
+                return;
+            }
 
-            var arcSegment = new ArcSegment();
-            arcSegment.IsLargeArc = angle > 180.0;
-            arcSegment.Point = endPoint;
-            arcSegment.Size = new Size(radius, radius);
-            arcSegment.SweepDirection = SweepDirection.Clockwise;
+            _lastClipAngle = angleF;
+            _lastClipRadius = radiusF;
+            _lastClipThickness = thicknessF;
 
-            pathFigure.Segments.Add(arcSegment);
+            DisposeClipGeometry();
 
-            var pathGeometry = new PathGeometry();
-            pathGeometry.Figures.Add(pathFigure);
+            var device = CanvasDevice.GetSharedDevice();
 
-            // Note: Composition clip with custom geometry has limitations in UWP
-            // This is a simplified fallback
+            // Build center-line geometry (open arc), then "Stroke" it to get a filled outline for Composition clipping.
+            CanvasGeometry centerLine = null;
+
+            try
+            {
+                if (angle >= 359.999)
+                {
+                    // Full circle case (Value ~ 100): use a true circle so there is no end-cap discontinuity.
+                    centerLine = CanvasGeometry.CreateCircle(device, ToVector2(centerPoint), radiusF);
+                }
+                else
+                {
+                    var start = new Point(centerPoint.X, centerPoint.Y - radius);
+                    var end = ScaleUnitCirclePoint(centerPoint, angle, radius);
+
+                    using (var pb = new CanvasPathBuilder(device))
+                    {
+                        pb.BeginFigure(ToVector2(start));
+                        pb.AddArc(
+                            ToVector2(end),
+                            radiusF,
+                            radiusF,
+                            0f,
+                            CanvasSweepDirection.Clockwise,
+                            angle > 180.0 ? CanvasArcSize.Large : CanvasArcSize.Small);
+                        pb.EndFigure(CanvasFigureLoop.Open);
+
+                        centerLine = CanvasGeometry.CreatePath(pb);
+                    }
+                }
+
+                _clipStrokeStyle ??= new CanvasStrokeStyle
+                {
+                    StartCap = CanvasCapStyle.Round,
+                    EndCap = CanvasCapStyle.Round,
+                    DashCap = CanvasCapStyle.Round,
+                    LineJoin = CanvasLineJoin.Round,
+                };
+
+                _clipCanvasGeometry = centerLine.Stroke(thicknessF, _clipStrokeStyle);
+                _clipPathGeometry.Path = new CompositionPath(_clipCanvasGeometry);
+            }
+            finally
+            {
+                // centerLine is only an intermediate geometry; release it.
+                centerLine?.Dispose();
+            }
         }
 
         private void UpdateLegacyInnerArc(Point centerPoint, double radius, double angle)
@@ -370,21 +476,29 @@ namespace ProgressCircleGradient.Controls.ProgressCircle
             _innerArc.Size = new Size(radius, radius);
             _innerArc.SweepDirection = SweepDirection.Clockwise;
 
+            // If you keep the ellipse geometries in the template, make them work as round end-caps.
+            double cap = Math.Max(0.0, Thickness / 2.0);
+
             if (_startEllipse != null)
             {
                 _startEllipse.Center = circleStart;
-                _startEllipse.RadiusX = 0.25;
-                _startEllipse.RadiusY = 0.25;
+                _startEllipse.RadiusX = cap;
+                _startEllipse.RadiusY = cap;
             }
 
             if (_endEllipse != null)
             {
-                double xEnd = _innerArc.Point.X + Math.Cos(RADIANS * angle);
-                double yEnd = _innerArc.Point.Y + Math.Sin(RADIANS * angle);
+                _endEllipse.Center = _innerArc.Point;
+                _endEllipse.RadiusX = cap;
+                _endEllipse.RadiusY = cap;
+            }
 
-                _endEllipse.Center = new Point(xEnd, yEnd);
-                _endEllipse.RadiusX = 0.25;
-                _endEllipse.RadiusY = 0.25;
+            // Optional: make the path itself round-capped as well (doesn't hurt).
+            if (_innerPath != null)
+            {
+                _innerPath.StrokeStartLineCap = PenLineCap.Round;
+                _innerPath.StrokeEndLineCap = PenLineCap.Round;
+                _innerPath.StrokeLineJoin = PenLineJoin.Round;
             }
         }
 
@@ -396,12 +510,6 @@ namespace ProgressCircleGradient.Controls.ProgressCircle
         }
 
         private static Vector2 ToVector2(Point p) => new((float)p.X, (float)p.Y);
-
-        private static void OnTypePropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        {
-            if (d is ProgressCircleDeterminate pc)
-                pc.UpdateSize();
-        }
 
         private void UpdateSize()
         {

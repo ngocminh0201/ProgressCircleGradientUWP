@@ -2,6 +2,7 @@
     x:Class="ProgressCircleGradientUWP.MainPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:OneUI="using:ProgressCircleGradient.Controls.ProgressCircle"
     xmlns:OneUI2="using:ProgressCircleGradient.Controls.ProgressBar"
     xmlns:brushes="using:ProgressCircleGradient.Brushes"
     xmlns:controls="using:ProgressCircleGradient.Controls.ProgressCircle"
@@ -157,6 +158,93 @@
                 VerticalAlignment="Stretch"
                 Background="#2E2E2E"
                 CornerRadius="1" />
+            <!--  Cột 2: ProgressCircle  -->
+            <StackPanel
+                Grid.Column="2"
+                Margin="20,0,0,0"
+                HorizontalAlignment="Center"
+                Orientation="Vertical"
+                Spacing="32">
+                <!--  ProgressCircle Determinate bình thường  -->
+                <StackPanel Orientation="Vertical" Spacing="10">
+                    <TextBlock
+                        FontSize="15"
+                        FontWeight="Bold"
+                        Text="ProgressCircle Determinate" />
+                    <StackPanel
+                        VerticalAlignment="Center"
+                        Orientation="Horizontal"
+                        Spacing="16">
+                        <OneUI:ProgressCircleDeterminate
+                            x:Name="pcDeterminate"
+                            Background="#1919171A"
+                            Foreground="#387AFF"
+                            Size="Large"
+                            Type="Determinate1"
+                            Value="50" />
+                        <Slider
+                            Width="220"
+                            VerticalAlignment="Center"
+                            Maximum="100"
+                            Minimum="1"
+                            Value="{Binding Value, ElementName=pcDeterminate, Mode=TwoWay}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!--  ProgressCircle Determinate với ConicGradientBrush  -->
+                <StackPanel Orientation="Vertical" Spacing="10">
+                    <TextBlock
+                        FontSize="15"
+                        FontWeight="Bold"
+                        Text="ProgressCircle Determinate + ConicGradient" />
+                    <StackPanel
+                        VerticalAlignment="Center"
+                        Orientation="Horizontal"
+                        Spacing="16">
+                        <OneUI:ProgressCircleDeterminate
+                            x:Name="pcDeterminateConic"
+                            Background="#1919171A"
+                            Size="Large"
+                            Type="Determinate1"
+                            Value="50">
+                            <OneUI:ProgressCircleDeterminate.Foreground>
+                                <brushes:ConicGradientBrush />
+                            </OneUI:ProgressCircleDeterminate.Foreground>
+                        </OneUI:ProgressCircleDeterminate>
+                        <Slider
+                            Width="220"
+                            VerticalAlignment="Center"
+                            Maximum="100"
+                            Minimum="1"
+                            Value="{Binding Value, ElementName=pcDeterminateConic, Mode=TwoWay}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!--  ProgressCircle Indeterminate bình thường  -->
+                <!--<StackPanel Orientation="Vertical" Spacing="10">
+                    <TextBlock
+                        FontSize="15"
+                        FontWeight="Bold"
+                        Text="ProgressCircle Indeterminate" />
+                    <OneUI:ProgressCircleIndeterminate
+                        Foreground="#387AFF"
+                        PointForeground="#3DCC87"
+                        Size="Large" />
+                </StackPanel>-->
+
+                <!--  ProgressCircle Indeterminate với ConicGradientBrush  -->
+                <!--<StackPanel Orientation="Vertical" Spacing="10">
+                    <TextBlock
+                        FontSize="15"
+                        FontWeight="Bold"
+                        Text="ProgressCircle Indeterminate + ConicGradient" />
+                    <OneUI:ProgressCircleIndeterminate Size="Large">
+                        <OneUI:ProgressCircleIndeterminate.Foreground>
+                            <brushes:ConicGradientBrush />
+                        </OneUI:ProgressCircleIndeterminate.Foreground>
+                    </OneUI:ProgressCircleIndeterminate>
+                </StackPanel>-->
+            </StackPanel>
         </Grid>
     </StackPanel>
 </Page>
