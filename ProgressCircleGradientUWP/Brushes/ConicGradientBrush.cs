@@ -10,18 +10,17 @@ using Windows.UI.Xaml.Media;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.UI.Composition;
 
-namespace ProgressCircleGradient.Brushes
+namespace ProgressCircleGradientUWP.Brushes
 {
     public sealed partial class ConicGradientBrush : XamlCompositionBrushBase
     {
         private const int FixedResolution = 2048;
-
         private const float InitialAngleOffset = -46.2f;
 
-        private Compositor? _compositor;
-        private CompositionGraphicsDevice? _graphicsDevice;
-        private CompositionDrawingSurface? _surface;
-        private CompositionSurfaceBrush? _surfaceBrush;
+        private Compositor _compositor;
+        private CompositionGraphicsDevice _graphicsDevice;
+        private CompositionDrawingSurface _surface;
+        private CompositionSurfaceBrush _surfaceBrush;
 
         private struct Stop(float angleDeg, byte a, byte r, byte g, byte b)
         {
@@ -81,14 +80,12 @@ namespace ProgressCircleGradient.Brushes
             _compositor = null;
         }
 
-        private static Compositor? GetCompositorForUwp()
+        private static Compositor GetCompositorForUwp()
         {
-            // UWP: Window.Current.Compositor is the intended compositor for XamlCompositionBrushBase.
             var w = Window.Current;
             if (w != null)
                 return w.Compositor;
 
-            // Fallback (rare)
             var root = Window.Current?.Content as UIElement;
             if (root != null)
                 return ElementCompositionPreview.GetElementVisual(root).Compositor;
@@ -123,13 +120,10 @@ namespace ProgressCircleGradient.Brushes
                 FixedResolution,
                 DirectXPixelFormat.B8G8R8A8UIntNormalized);
             using var ds = CanvasComposition.CreateDrawingSession(_surface);
-                ds.Clear(Colors.Transparent);
-                ds.DrawImage(bitmap);
+            ds.Clear(Colors.Transparent);
+            ds.DrawImage(bitmap);
         }
 
-        /// <summary>
-        /// Sample a color at a point (useful for "punch-through" mapping logic).
-        /// </summary>
         public static Color SampleColorAtPoint(Point point, double centerX, double centerY)
         {
             float px = (float)(point.X - centerX);
@@ -148,7 +142,6 @@ namespace ProgressCircleGradient.Brushes
 
             float af = a / 255f;
 
-            // un-premultiply
             byte r = ClampToByte((int)Math.Round(rP / af));
             byte g = ClampToByte((int)Math.Round(gP / af));
             byte b = ClampToByte((int)Math.Round(bP / af));
@@ -180,7 +173,6 @@ namespace ProgressCircleGradient.Brushes
 
                     EvaluateColorAtAnglePremultiplied(angleDeg, out byte a, out byte rP, out byte gP, out byte bP);
 
-                    // BGRA premultiplied
                     buffer[idx++] = bP;
                     buffer[idx++] = gP;
                     buffer[idx++] = rP;
@@ -198,7 +190,6 @@ namespace ProgressCircleGradient.Brushes
             Stop prev, next;
             float prevAngle, nextAngle;
 
-            // wrap-around
             if (angleDeg < Stops[0].AngleDeg)
             {
                 prev = Stops[Stops.Length - 1];
@@ -233,7 +224,6 @@ namespace ProgressCircleGradient.Brushes
             float ap0 = prev.A / 255f;
             float ap1 = next.A / 255f;
 
-            // premultiply
             float r0 = (prev.R / 255f) * ap0;
             float g0 = (prev.G / 255f) * ap0;
             float b0 = (prev.B / 255f) * ap0;

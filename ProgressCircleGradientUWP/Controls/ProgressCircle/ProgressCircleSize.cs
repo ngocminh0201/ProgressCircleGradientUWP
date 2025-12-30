@@ -1,4 +1,4 @@
-namespace ProgressCircleGradient.Controls.ProgressCircle
+namespace ProgressCircleGradientUWP.Controls.ProgressCircle
 {
     public enum ProgressCircleSize
     {

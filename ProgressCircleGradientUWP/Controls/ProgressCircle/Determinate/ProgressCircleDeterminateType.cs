@@ -1,4 +1,4 @@
-﻿namespace ProgressCircleGradient.Controls.ProgressCircle.Determinate;
+﻿namespace ProgressCircleGradientUWP.Controls.ProgressCircle.Determinate;
 
 public enum ProgressCircleDeterminateType
 {

@@ -13,10 +13,10 @@ using Windows.UI.Xaml.Shapes;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Geometry;
 
-using ProgressCircleGradient.Controls.ProgressCircle.Determinate;
-using ProgressCircleGradient.Helpers;
+using ProgressCircleGradientUWP.Controls.ProgressCircle.Determinate;
+using ProgressCircleGradientUWP.Helpers;
 
-namespace ProgressCircleGradient.Controls.ProgressCircle
+namespace ProgressCircleGradientUWP.Controls.ProgressCircle
 {
     public partial class ProgressCircleDeterminate : ProgressCircle
     {
@@ -164,8 +164,6 @@ namespace ProgressCircleGradient.Controls.ProgressCircle
         {
             base.OnApplyTemplate();
 
-            colorGrid = (Grid)GetTemplateChild(PART_COLOR_GRID_NAME);
-            _text = (TextBlock)GetTemplateChild(PART_TEXT_NAME);
             _canvas = (Canvas)GetTemplateChild(PART_CANVAS);
 
             _outerPath = GetTemplateChild(PART_OUTER_PATH) as Path;
@@ -179,6 +177,7 @@ namespace ProgressCircleGradient.Controls.ProgressCircle
             _innerArc = GetTemplateChild(PART_INNER_ARC_SEGMENT) as ArcSegment;
             _startEllipse = GetTemplateChild(PART_START_ELLIPSE) as EllipseGeometry;
             _endEllipse = GetTemplateChild(PART_END_ELLIPSE) as EllipseGeometry;
+            _text = (TextBlock)GetTemplateChild(PART_TEXT_NAME);
 
             // Reset cached clip so the first Draw() always builds a correct path for the new template instance.
             _lastClipAngle = _lastClipRadius = _lastClipThickness = -1f;

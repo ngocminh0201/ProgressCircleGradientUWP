@@ -5,13 +5,13 @@ using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Animation;
 using Windows.UI.Xaml.Shapes;
-using ProgressCircleGradient.Brushes;
-using ProgressCircleGradient.Helpers;
+using ProgressCircleGradientUWP.Brushes;
+using ProgressCircleGradientUWP.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace ProgressCircleGradient.Controls.ProgressCircle
+namespace ProgressCircleGradientUWP.Controls.ProgressCircle
 {
     public partial class ProgressCircleIndeterminate : ProgressCircle
     {
@@ -47,8 +47,8 @@ namespace ProgressCircleGradient.Controls.ProgressCircle
         private Storyboard _rotateAnimation;
         private Windows.UI.Xaml.Shapes.Shape _ellipsePoint, _ellipse01, _ellipse02, _ellipse03;
 
-        private Brush _elipseIndeterminateBrushDefault = ColorsHelpers.ConvertColorHex(ELLIPSE_INDETERMINATE_KEY);
-        private Brush _variantElipseIndeterminateBrushDefault = ColorsHelpers.ConvertColorHex(VARIANT_ELLIPSE_INDETERMINATE_KEY);
+        private Brush _ellipseIndeterminateBrush = ColorsHelpers.ConvertColorHex(ELLIPSE_INDETERMINATE_KEY);
+        private Brush _variantEllipseIndeterminateBrush = ColorsHelpers.ConvertColorHex(VARIANT_ELLIPSE_INDETERMINATE_KEY);
 
         private long _visibilityPropertyRegisterToken;
 
@@ -70,7 +70,7 @@ namespace ProgressCircleGradient.Controls.ProgressCircle
         };
         #endregion
 
-        #region Depedency Properties
+        #region Dependency Properties
         public new Brush Foreground
         {
             get => (Brush)GetValue(ForegroundProperty);
@@ -204,7 +204,7 @@ namespace ProgressCircleGradient.Controls.ProgressCircle
         {
             if (d is ProgressCircleIndeterminate self)
             {
-                self._elipseIndeterminateBrushDefault = (Brush)e.NewValue;
+                self._ellipseIndeterminateBrush = (Brush)e.NewValue;
                 self.UpdateDotBrushesAndMaybeRestartAnimation(restartAnimation: true);
             }
         }
@@ -213,7 +213,7 @@ namespace ProgressCircleGradient.Controls.ProgressCircle
         {
             if (d is ProgressCircleIndeterminate self)
             {
-                self._variantElipseIndeterminateBrushDefault = (Brush)e.NewValue;
+                self._variantEllipseIndeterminateBrush = (Brush)e.NewValue;
                 self.UpdateDotBrushesAndMaybeRestartAnimation(restartAnimation: true);
             }
         }
@@ -477,8 +477,8 @@ namespace ProgressCircleGradient.Controls.ProgressCircle
 
         private void ApplyNormalDotBrushes()
         {
-            Brush normalBrush = ResolveBrushOrDefault(_elipseIndeterminateBrushDefault, ELLIPSE_INDETERMINATE_KEY);
-            Brush pointBrush = ResolveBrushOrDefault(_variantElipseIndeterminateBrushDefault, VARIANT_ELLIPSE_INDETERMINATE_KEY);
+            Brush normalBrush = ResolveBrushOrDefault(_ellipseIndeterminateBrush, ELLIPSE_INDETERMINATE_KEY);
+            Brush pointBrush = ResolveBrushOrDefault(_variantEllipseIndeterminateBrush, VARIANT_ELLIPSE_INDETERMINATE_KEY);
 
             if (_ellipse01 != null) _ellipse01.Fill = normalBrush;
             if (_ellipse02 != null) _ellipse02.Fill = normalBrush;

@@ -1,23 +1,10 @@
-﻿namespace ProgressCircleGradient.Controls.ProgressCircle
+﻿namespace ProgressCircleGradientUWP.Controls.ProgressCircle
 {
-
     internal class ProgressCircleIndeterminateModel
     {
-        public double Scale
-        {
-            get; set;
-        }
-        public double GridSize
-        {
-            get; set;
-        }
-        public ProgressCircleIndeterminateOrientation Orientation
-        {
-            get; set;
-        }
-        public ProgressCircleSize Size
-        {
-            get; set;
-        }
+        public double Scale { get; set; }
+        public double GridSize { get; set; }
+        public ProgressCircleIndeterminateOrientation Orientation { get; set; }
+        public ProgressCircleSize Size { get; set; }
     }
 }

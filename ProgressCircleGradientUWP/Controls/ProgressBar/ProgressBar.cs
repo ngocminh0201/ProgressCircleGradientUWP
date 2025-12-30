@@ -1,14 +1,13 @@
 ﻿using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Animation;
 using Windows.UI.Xaml.Shapes;
 using System;
 using Application = Windows.UI.Xaml.Application;
 
-namespace ProgressCircleGradient.Controls.ProgressBar
+namespace ProgressCircleGradientUWP.Controls.ProgressBar
 {
     public sealed partial class ProgressBar : Windows.UI.Xaml.Controls.ProgressBar
     {
@@ -22,16 +21,15 @@ namespace ProgressCircleGradient.Controls.ProgressBar
         private const string INDETERMINATE_STYLE = "OneUIProgressBarIndeterminateStyle";
         #endregion
 
-        #region Variable
+        #region Variables
         private Storyboard _indeterminateAnimation;
         private TextBlock _progressText;
         private Rectangle _progressBarIndicator;
-        private LinearGradientBrush? _fixedGradientBrush;
-        private MatrixTransform? _fixedGradientTransform;
-
+        private LinearGradientBrush _fixedGradientBrush;
+        private MatrixTransform _fixedGradientTransform;
         #endregion
 
-        #region DependencyProperty
+        #region Dependency Properties
         public Brush MaskBrush
         {
             get => (Brush)GetValue(MaskBrushProperty);

@@ -1,8 +1,8 @@
 using System;
-using Windows.UI.Xaml.Media;
 using Windows.UI;
+using Windows.UI.Xaml.Media;
 
-namespace ProgressCircleGradient.Helpers
+namespace ProgressCircleGradientUWP.Helpers
 {
     internal static class ColorsHelpers
     {
@@ -17,10 +17,7 @@ namespace ProgressCircleGradient.Helpers
                     var colorARGB = Color.FromArgb(colorConverted.A, colorConverted.R, colorConverted.G, colorConverted.B);
                     return new SolidColorBrush(colorARGB);
                 }
-                else
-                {
-                    return new SolidColorBrush();
-                }
+                return new SolidColorBrush();
             }
             catch (ArgumentException)
             {
@@ -62,17 +59,15 @@ namespace ProgressCircleGradient.Helpers
             byte g = (byte)Math.Clamp(green, 0, 255);
             byte b = (byte)Math.Clamp(blue, 0, 255);
 
-            var colorARGB = Color.FromArgb(a, r, g, b);
-            return new SolidColorBrush(colorARGB);
+            return new SolidColorBrush(Color.FromArgb(a, r, g, b));
         }
 
-        public static bool AreColorsEqual(SolidColorBrush firstSolidColorBrush, SolidColorBrush secondSolidColorBrush)
+        public static bool AreColorsEqual(SolidColorBrush firstBrush, SolidColorBrush secondBrush)
         {
-            if (firstSolidColorBrush == null || secondSolidColorBrush == null)
-            {
+            if (firstBrush == null || secondBrush == null)
                 return false;
-            }
-            return firstSolidColorBrush.Color.ToString().Equals(secondSolidColorBrush.Color.ToString());
+
+            return firstBrush.Color.Equals(secondBrush.Color);
         }
     }
 }

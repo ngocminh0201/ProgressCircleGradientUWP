@@ -1,8 +1,8 @@
-﻿namespace ProgressCircleGradient.Controls.ProgressCircle
+﻿namespace ProgressCircleGradientUWP.Controls.ProgressCircle
 {
     internal enum ProgressCircleIndeterminateOrientation
     {
-        Horizontal, Vertical
+        Horizontal,
+        Vertical
     }
-
 }
