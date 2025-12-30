@@ -13,7 +13,7 @@ using System.Linq;
 
 namespace ProgressCircleGradient.Controls.ProgressCircle
 {
-    public class ProgressCircleIndeterminate : ProgressCircle
+    public partial class ProgressCircleIndeterminate : ProgressCircle
     {
         #region Constants
         private const string PART_ROOT_GRID_NAME = "PART_RootGrid";
@@ -26,7 +26,7 @@ namespace ProgressCircleGradient.Controls.ProgressCircle
         private const string PART_ELLIPSE03 = "PART_Ellipse03";
 
         private const string ELLIPSE_INDETERMINATE_KEY = "#387AFF";
-        private const string VARIANT_ELLIPSE_INDETERMINATE_KEY = "3DCC87";
+        private const string VARIANT_ELLIPSE_INDETERMINATE_KEY = "#3DCC87";
 
         private const double ELLIPSE_BASE_SIZE = 4.5;
         private const double ELLIPE_BASE_MIN_OFFSET = 1.5;
@@ -42,20 +42,25 @@ namespace ProgressCircleGradient.Controls.ProgressCircle
         #endregion
 
         #region Variables
-        private Grid _rootGrid;
+        private Windows.UI.Xaml.FrameworkElement _rootGrid;
         private TextBlock _text;
         private Storyboard _rotateAnimation;
-        private Ellipse _ellipsePoint, _ellipse01, _ellipse02, _ellipse03;
+        private Windows.UI.Xaml.Shapes.Shape _ellipsePoint, _ellipse01, _ellipse02, _ellipse03;
 
         private Brush _elipseIndeterminateBrushDefault = ColorsHelpers.ConvertColorHex(ELLIPSE_INDETERMINATE_KEY);
         private Brush _variantElipseIndeterminateBrushDefault = ColorsHelpers.ConvertColorHex(VARIANT_ELLIPSE_INDETERMINATE_KEY);
 
         private long _visibilityPropertyRegisterToken;
 
-        private int _dotBrushUpdateGeneration;
-        private bool _isUsingFrozenConicColors;
+        private bool _isConicMode;
+        private bool _isRenderingSubscribed;
 
-        private readonly List<ProgressCircleIndeterminateModel> _progressCircleIndeterminateModels = new()
+        private SolidColorBrush _conicDotBrush01;
+        private SolidColorBrush _conicDotBrushPoint;
+        private SolidColorBrush _conicDotBrush02;
+        private SolidColorBrush _conicDotBrush03;
+
+        private readonly List<ProgressCircleIndeterminateModel> _progressCircleIndeterminateModels = new List<ProgressCircleIndeterminateModel>
         {
             new ProgressCircleIndeterminateModel(){ Size = ProgressCircleSize.XLarge, Orientation = ProgressCircleIndeterminateOrientation.Vertical, Scale = 3.75, GridSize = 90 },
             new ProgressCircleIndeterminateModel(){ Size = ProgressCircleSize.Large,  Orientation = ProgressCircleIndeterminateOrientation.Vertical, Scale = 2.5,  GridSize = 60 },
@@ -184,7 +189,13 @@ namespace ProgressCircleGradient.Controls.ProgressCircle
 
         private void ProgressCircleIndeterminate_Unloaded(object sender, RoutedEventArgs e)
         {
-            UnregisterPropertyChangedCallback(VisibilityProperty, _visibilityPropertyRegisterToken);
+            if (_visibilityPropertyRegisterToken != 0)
+            {
+                UnregisterPropertyChangedCallback(VisibilityProperty, _visibilityPropertyRegisterToken);
+                _visibilityPropertyRegisterToken = 0;
+            }
+
+            StopConicRendering();
 
             _rotateAnimation?.Stop();
         }
@@ -213,6 +224,7 @@ namespace ProgressCircleGradient.Controls.ProgressCircle
             {
                 if (self.Visibility == Visibility.Collapsed)
                 {
+                    self.StopConicRendering();
                     self._rotateAnimation?.Stop();
                 }
                 else
@@ -321,8 +333,6 @@ namespace ProgressCircleGradient.Controls.ProgressCircle
 
         private void UpdateDotBrushesAndMaybeRestartAnimation(bool restartAnimation)
         {
-            _dotBrushUpdateGeneration++;
-
             if (_ellipse01 == null || _ellipse02 == null || _ellipse03 == null || _ellipsePoint == null)
                 return;
 
@@ -332,13 +342,17 @@ namespace ProgressCircleGradient.Controls.ProgressCircle
                 ResetAnimationToInitialFrame();
             }
 
-            if (TryApplyFrozenConicColors())
+            if (GetConicBrushSourceOrNull() != null)
             {
-                _isUsingFrozenConicColors = true;
+                EnsureConicDotBrushesAssigned();
+                UpdateConicDotColors();
+                StartConicRendering();
+                _isConicMode = true;
             }
             else
             {
-                _isUsingFrozenConicColors = false;
+                _isConicMode = false;
+                StopConicRendering();
                 ApplyNormalDotBrushes();
             }
 
@@ -348,7 +362,7 @@ namespace ProgressCircleGradient.Controls.ProgressCircle
             }
         }
 
-        private ConicGradientBrush? GetConicBrushSourceOrNull()
+        private ConicGradientBrush GetConicBrushSourceOrNull()
         {
             if (PointForeground is ConicGradientBrush c1)
                 return c1;
@@ -357,13 +371,58 @@ namespace ProgressCircleGradient.Controls.ProgressCircle
             return null;
         }
 
-        private bool TryApplyFrozenConicColors()
+        private void EnsureConicDotBrushesAssigned()
         {
-            if (GetConicBrushSourceOrNull() == null)
-                return false;
+            if (_conicDotBrush01 == null) _conicDotBrush01 = new SolidColorBrush(Colors.Transparent);
+            if (_conicDotBrushPoint == null) _conicDotBrushPoint = new SolidColorBrush(Colors.Transparent);
+            if (_conicDotBrush02 == null) _conicDotBrush02 = new SolidColorBrush(Colors.Transparent);
+            if (_conicDotBrush03 == null) _conicDotBrush03 = new SolidColorBrush(Colors.Transparent);
 
-            double w = (_rootGrid != null && _rootGrid.ActualWidth > 0) ? _rootGrid.ActualWidth : (_rootGrid?.Width ?? 0);
-            double h = (_rootGrid != null && _rootGrid.ActualHeight > 0) ? _rootGrid.ActualHeight : (_rootGrid?.Height ?? 0);
+            if (_ellipse01 != null) _ellipse01.Fill = _conicDotBrush01;
+            if (_ellipsePoint != null) _ellipsePoint.Fill = _conicDotBrushPoint;
+            if (_ellipse02 != null) _ellipse02.Fill = _conicDotBrush02;
+            if (_ellipse03 != null) _ellipse03.Fill = _conicDotBrush03;
+        }
+
+        private void StartConicRendering()
+        {
+            if (_isRenderingSubscribed)
+                return;
+
+            if (Visibility == Visibility.Collapsed)
+                return;
+
+            Windows.UI.Xaml.Media.CompositionTarget.Rendering += OnCompositionTargetRendering;
+            _isRenderingSubscribed = true;
+        }
+
+        private void StopConicRendering()
+        {
+            if (!_isRenderingSubscribed)
+                return;
+
+            Windows.UI.Xaml.Media.CompositionTarget.Rendering -= OnCompositionTargetRendering;
+            _isRenderingSubscribed = false;
+        }
+
+        private void OnCompositionTargetRendering(object sender, object e)
+        {
+            if (!_isConicMode)
+                return;
+
+            if (Visibility == Visibility.Collapsed)
+                return;
+
+            UpdateConicDotColors();
+        }
+
+        private void UpdateConicDotColors()
+        {
+            if (_rootGrid == null || _ellipse01 == null || _ellipse02 == null || _ellipse03 == null || _ellipsePoint == null)
+                return;
+
+            double w = (_rootGrid.ActualWidth > 0) ? _rootGrid.ActualWidth : _rootGrid.Width;
+            double h = (_rootGrid.ActualHeight > 0) ? _rootGrid.ActualHeight : _rootGrid.Height;
 
             if (w <= 0 || h <= 0)
             {
@@ -379,28 +438,41 @@ namespace ProgressCircleGradient.Controls.ProgressCircle
                 }
             }
 
-            double cx = w * 0.5;
-            double cy = h * 0.5;
+            Windows.Foundation.Point center;
+            try
+            {
+                center = _rootGrid.TransformToVisual(this).TransformPoint(new Windows.Foundation.Point(w * 0.5, h * 0.5));
+            }
+            catch
+            {
+                center = new Windows.Foundation.Point(w * 0.5, h * 0.5);
+            }
 
-            double d = EllipseDiameter;
-            double m = EllipseMinOffset;
+            UpdateConicDotColor(_ellipse01, _conicDotBrush01, center);
+            UpdateConicDotColor(_ellipsePoint, _conicDotBrushPoint, center);
+            UpdateConicDotColor(_ellipse02, _conicDotBrush02, center);
+            UpdateConicDotColor(_ellipse03, _conicDotBrush03, center);
+        }
 
-            var top = new Windows.Foundation.Point(cx, m + d * 0.5);
-            var right = new Windows.Foundation.Point(w - m - d * 0.5, cy);
-            var bottom = new Windows.Foundation.Point(cx, h - m - d * 0.5);
-            var left = new Windows.Foundation.Point(m + d * 0.5, cy);
+        private void UpdateConicDotColor(Windows.UI.Xaml.Shapes.Shape ellipse, SolidColorBrush brush, Windows.Foundation.Point center)
+        {
+            if (ellipse == null || brush == null)
+                return;
 
-            Color cTop = ConicGradientBrush.SampleColorAtPoint(top, cx, cy);
-            Color cRight = ConicGradientBrush.SampleColorAtPoint(right, cx, cy);
-            Color cBottom = ConicGradientBrush.SampleColorAtPoint(bottom, cx, cy);
-            Color cLeft = ConicGradientBrush.SampleColorAtPoint(left, cx, cy);
+            double ew = (ellipse.ActualWidth > 0) ? ellipse.ActualWidth : EllipseDiameter;
+            double eh = (ellipse.ActualHeight > 0) ? ellipse.ActualHeight : EllipseDiameter;
 
-            _ellipse01.Fill = new SolidColorBrush(cTop);
-            _ellipsePoint.Fill = new SolidColorBrush(cRight);
-            _ellipse02.Fill = new SolidColorBrush(cBottom);
-            _ellipse03.Fill = new SolidColorBrush(cLeft);
+            Windows.Foundation.Point p;
+            try
+            {
+                p = ellipse.TransformToVisual(this).TransformPoint(new Windows.Foundation.Point(ew * 0.5, eh * 0.5));
+            }
+            catch
+            {
+                p = new Windows.Foundation.Point(0, 0);
+            }
 
-            return true;
+            brush.Color = ConicGradientBrush.SampleColorAtPoint(p, center.X, center.Y);
         }
 
         private void ApplyNormalDotBrushes()

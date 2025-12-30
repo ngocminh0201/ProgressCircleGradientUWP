@@ -221,7 +221,7 @@
                 </StackPanel>
 
                 <!--  ProgressCircle Indeterminate bình thường  -->
-                <!--<StackPanel Orientation="Vertical" Spacing="10">
+                <StackPanel Orientation="Vertical" Spacing="10">
                     <TextBlock
                         FontSize="15"
                         FontWeight="Bold"
@@ -230,10 +230,10 @@
                         Foreground="#387AFF"
                         PointForeground="#3DCC87"
                         Size="Large" />
-                </StackPanel>-->
+                </StackPanel>
 
                 <!--  ProgressCircle Indeterminate với ConicGradientBrush  -->
-                <!--<StackPanel Orientation="Vertical" Spacing="10">
+                <StackPanel Orientation="Vertical" Spacing="10">
                     <TextBlock
                         FontSize="15"
                         FontWeight="Bold"
@@ -243,7 +243,7 @@
                             <brushes:ConicGradientBrush />
                         </OneUI:ProgressCircleIndeterminate.Foreground>
                     </OneUI:ProgressCircleIndeterminate>
-                </StackPanel>-->
+                </StackPanel>
             </StackPanel>
         </Grid>
     </StackPanel>
