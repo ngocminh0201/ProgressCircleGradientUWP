@@ -12,15 +12,15 @@ using Microsoft.Graphics.Canvas.UI.Composition;
 
 namespace ProgressCircleGradientUWP.Brushes
 {
-    public sealed partial class ConicGradientBrush : XamlCompositionBrushBase
+    public sealed partial class AngularGradientBrush : XamlCompositionBrushBase
     {
         private const int FixedResolution = 2048;
         private const float InitialAngleOffset = -46.2f;
 
-        private Compositor _compositor;
-        private CompositionGraphicsDevice _graphicsDevice;
-        private CompositionDrawingSurface _surface;
-        private CompositionSurfaceBrush _surfaceBrush;
+        private Compositor? _compositor;
+        private CompositionGraphicsDevice? _graphicsDevice;
+        private CompositionDrawingSurface? _surface;
+        private CompositionSurfaceBrush? _surfaceBrush;
 
         private struct Stop(float angleDeg, byte a, byte r, byte g, byte b)
         {
@@ -80,7 +80,7 @@ namespace ProgressCircleGradientUWP.Brushes
             _compositor = null;
         }
 
-        private static Compositor GetCompositorForUwp()
+        private static Compositor? GetCompositorForUwp()
         {
             var w = Window.Current;
             if (w != null)
@@ -109,7 +109,7 @@ namespace ProgressCircleGradientUWP.Brushes
             if (_surface == null)
                 return;
 
-            byte[] bytes = BuildConicGradientPixelsPremultipliedBGRA(FixedResolution, FixedResolution);
+            byte[] bytes = BuildAngularGradientPixelsPremultipliedBGRA(FixedResolution, FixedResolution);
 
             var device = CanvasDevice.GetSharedDevice();
 
@@ -149,7 +149,7 @@ namespace ProgressCircleGradientUWP.Brushes
             return Color.FromArgb(a, r, g, b);
         }
 
-        private static byte[] BuildConicGradientPixelsPremultipliedBGRA(int width, int height)
+        private static byte[] BuildAngularGradientPixelsPremultipliedBGRA(int width, int height)
         {
             var buffer = new byte[width * height * 4];
 
@@ -192,14 +192,14 @@ namespace ProgressCircleGradientUWP.Brushes
 
             if (angleDeg < Stops[0].AngleDeg)
             {
-                prev = Stops[Stops.Length - 1];
+                prev = Stops[^1];
                 next = Stops[0];
                 prevAngle = prev.AngleDeg - 360f;
                 nextAngle = next.AngleDeg;
             }
-            else if (angleDeg >= Stops[Stops.Length - 1].AngleDeg)
+            else if (angleDeg >= Stops[^1].AngleDeg)
             {
-                prev = Stops[Stops.Length - 1];
+                prev = Stops[^1];
                 next = Stops[0];
                 prevAngle = prev.AngleDeg;
                 nextAngle = next.AngleDeg + 360f;

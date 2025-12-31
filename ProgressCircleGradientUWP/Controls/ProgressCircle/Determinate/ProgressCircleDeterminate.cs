@@ -64,7 +64,7 @@ namespace ProgressCircleGradientUWP.Controls.ProgressCircle
         private CompositionGeometricClip _geometricClip;
 
         // Keep the current clip geometry alive while the compositor uses it.
-        private CanvasGeometry _clipCanvasGeometry;
+        private CanvasGeometry? _clipCanvasGeometry;
         private CanvasStrokeStyle _clipStrokeStyle;
         private float _lastClipAngle = -1f;
         private float _lastClipRadius = -1f;
@@ -78,15 +78,15 @@ namespace ProgressCircleGradientUWP.Controls.ProgressCircle
 
         private TextBlock _text;
 
-        private readonly List<ProgressCircleDeterminateModel> _progressCircleDeterminateModels = new()
-        {
+        private readonly List<ProgressCircleDeterminateModel> _progressCircleDeterminateModels =
+        [
             new ProgressCircleDeterminateModel(){ Type = ProgressCircleDeterminateType.Determinate1, Size = ProgressCircleSize.XLarge, Orientation = ProgressCircleIndeterminateOrientation.Vertical, RadiusSize = 30, Thickness = 10, Margin = new Thickness(7) },
             new ProgressCircleDeterminateModel(){ Type = ProgressCircleDeterminateType.Determinate1, Size = ProgressCircleSize.Large,  Orientation = ProgressCircleIndeterminateOrientation.Vertical, RadiusSize = 21, Thickness = 8,  Margin = new Thickness(5) },
             new ProgressCircleDeterminateModel(){ Type = ProgressCircleDeterminateType.Determinate1, Size = ProgressCircleSize.Medium, Orientation = ProgressCircleIndeterminateOrientation.Vertical, RadiusSize = 17, Thickness = 6,  Margin = new Thickness(4) },
             new ProgressCircleDeterminateModel(){ Type = ProgressCircleDeterminateType.Determinate1, Size = ProgressCircleSize.Small,  Orientation = ProgressCircleIndeterminateOrientation.Horizontal, RadiusSize = 8.5, Thickness = 3, Margin = new Thickness(2) },
             new ProgressCircleDeterminateModel(){ Type = ProgressCircleDeterminateType.Determinate1, Size = ProgressCircleSize.SmallTitle, Orientation = ProgressCircleIndeterminateOrientation.Horizontal, RadiusSize = 7, Thickness = 2, Margin = new Thickness(1.6) },
             new ProgressCircleDeterminateModel(){ Type = ProgressCircleDeterminateType.Determinate2, Size = ProgressCircleSize.SmallTitle, Orientation = ProgressCircleIndeterminateOrientation.Vertical, RadiusSize = 31, Thickness = 6, Margin = new Thickness(7) },
-        };
+        ];
         #endregion
 
         #region Dependency Properties
@@ -289,7 +289,7 @@ namespace ProgressCircleGradientUWP.Controls.ProgressCircle
             UpdateTrackGeometry(center, Radius);
 
             // If the template contains PART_GradientLayer, we render the "progress" via:
-            // (1) fill the rectangle with Foreground (e.g. ConicGradientBrush),
+            // (1) fill the rectangle with Foreground (e.g. AngularGradientBrush),
             // (2) clip it to the arc segment that corresponds to Value.
             if (_gradientLayer != null)
             {
@@ -415,7 +415,7 @@ namespace ProgressCircleGradientUWP.Controls.ProgressCircle
             var device = CanvasDevice.GetSharedDevice();
 
             // Build center-line geometry (open arc), then "Stroke" it to get a filled outline for Composition clipping.
-            CanvasGeometry centerLine = null;
+            CanvasGeometry? centerLine = null;
 
             try
             {

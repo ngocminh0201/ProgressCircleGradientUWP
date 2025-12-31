@@ -52,13 +52,13 @@ namespace ProgressCircleGradientUWP.Controls.ProgressCircle
 
         private long _visibilityPropertyRegisterToken;
 
-        private bool _isConicMode;
+        private bool _isAngularMode;
         private bool _isRenderingSubscribed;
 
-        private SolidColorBrush _conicDotBrush01;
-        private SolidColorBrush _conicDotBrushPoint;
-        private SolidColorBrush _conicDotBrush02;
-        private SolidColorBrush _conicDotBrush03;
+        private SolidColorBrush _AngularDotBrush01;
+        private SolidColorBrush _AngularDotBrushPoint;
+        private SolidColorBrush _AngularDotBrush02;
+        private SolidColorBrush _AngularDotBrush03;
 
         private readonly List<ProgressCircleIndeterminateModel> _progressCircleIndeterminateModels = new List<ProgressCircleIndeterminateModel>
         {
@@ -195,7 +195,7 @@ namespace ProgressCircleGradientUWP.Controls.ProgressCircle
                 _visibilityPropertyRegisterToken = 0;
             }
 
-            StopConicRendering();
+            StopAngularRendering();
 
             _rotateAnimation?.Stop();
         }
@@ -224,7 +224,7 @@ namespace ProgressCircleGradientUWP.Controls.ProgressCircle
             {
                 if (self.Visibility == Visibility.Collapsed)
                 {
-                    self.StopConicRendering();
+                    self.StopAngularRendering();
                     self._rotateAnimation?.Stop();
                 }
                 else
@@ -342,17 +342,17 @@ namespace ProgressCircleGradientUWP.Controls.ProgressCircle
                 ResetAnimationToInitialFrame();
             }
 
-            if (GetConicBrushSourceOrNull() != null)
+            if (GetAngularBrushSourceOrNull() != null)
             {
-                EnsureConicDotBrushesAssigned();
-                UpdateConicDotColors();
-                StartConicRendering();
-                _isConicMode = true;
+                EnsureAngularDotBrushesAssigned();
+                UpdateAngularDotColors();
+                StartAngularRendering();
+                _isAngularMode = true;
             }
             else
             {
-                _isConicMode = false;
-                StopConicRendering();
+                _isAngularMode = false;
+                StopAngularRendering();
                 ApplyNormalDotBrushes();
             }
 
@@ -362,29 +362,29 @@ namespace ProgressCircleGradientUWP.Controls.ProgressCircle
             }
         }
 
-        private ConicGradientBrush GetConicBrushSourceOrNull()
+        private AngularGradientBrush GetAngularBrushSourceOrNull()
         {
-            if (PointForeground is ConicGradientBrush c1)
+            if (PointForeground is AngularGradientBrush c1)
                 return c1;
-            if (Foreground is ConicGradientBrush c2)
+            if (Foreground is AngularGradientBrush c2)
                 return c2;
             return null;
         }
 
-        private void EnsureConicDotBrushesAssigned()
+        private void EnsureAngularDotBrushesAssigned()
         {
-            if (_conicDotBrush01 == null) _conicDotBrush01 = new SolidColorBrush(Colors.Transparent);
-            if (_conicDotBrushPoint == null) _conicDotBrushPoint = new SolidColorBrush(Colors.Transparent);
-            if (_conicDotBrush02 == null) _conicDotBrush02 = new SolidColorBrush(Colors.Transparent);
-            if (_conicDotBrush03 == null) _conicDotBrush03 = new SolidColorBrush(Colors.Transparent);
+            if (_AngularDotBrush01 == null) _AngularDotBrush01 = new SolidColorBrush(Colors.Transparent);
+            if (_AngularDotBrushPoint == null) _AngularDotBrushPoint = new SolidColorBrush(Colors.Transparent);
+            if (_AngularDotBrush02 == null) _AngularDotBrush02 = new SolidColorBrush(Colors.Transparent);
+            if (_AngularDotBrush03 == null) _AngularDotBrush03 = new SolidColorBrush(Colors.Transparent);
 
-            if (_ellipse01 != null) _ellipse01.Fill = _conicDotBrush01;
-            if (_ellipsePoint != null) _ellipsePoint.Fill = _conicDotBrushPoint;
-            if (_ellipse02 != null) _ellipse02.Fill = _conicDotBrush02;
-            if (_ellipse03 != null) _ellipse03.Fill = _conicDotBrush03;
+            if (_ellipse01 != null) _ellipse01.Fill = _AngularDotBrush01;
+            if (_ellipsePoint != null) _ellipsePoint.Fill = _AngularDotBrushPoint;
+            if (_ellipse02 != null) _ellipse02.Fill = _AngularDotBrush02;
+            if (_ellipse03 != null) _ellipse03.Fill = _AngularDotBrush03;
         }
 
-        private void StartConicRendering()
+        private void StartAngularRendering()
         {
             if (_isRenderingSubscribed)
                 return;
@@ -396,7 +396,7 @@ namespace ProgressCircleGradientUWP.Controls.ProgressCircle
             _isRenderingSubscribed = true;
         }
 
-        private void StopConicRendering()
+        private void StopAngularRendering()
         {
             if (!_isRenderingSubscribed)
                 return;
@@ -407,16 +407,16 @@ namespace ProgressCircleGradientUWP.Controls.ProgressCircle
 
         private void OnCompositionTargetRendering(object sender, object e)
         {
-            if (!_isConicMode)
+            if (!_isAngularMode)
                 return;
 
             if (Visibility == Visibility.Collapsed)
                 return;
 
-            UpdateConicDotColors();
+            UpdateAngularDotColors();
         }
 
-        private void UpdateConicDotColors()
+        private void UpdateAngularDotColors()
         {
             if (_rootGrid == null || _ellipse01 == null || _ellipse02 == null || _ellipse03 == null || _ellipsePoint == null)
                 return;
@@ -448,13 +448,13 @@ namespace ProgressCircleGradientUWP.Controls.ProgressCircle
                 center = new Windows.Foundation.Point(w * 0.5, h * 0.5);
             }
 
-            UpdateConicDotColor(_ellipse01, _conicDotBrush01, center);
-            UpdateConicDotColor(_ellipsePoint, _conicDotBrushPoint, center);
-            UpdateConicDotColor(_ellipse02, _conicDotBrush02, center);
-            UpdateConicDotColor(_ellipse03, _conicDotBrush03, center);
+            UpdateAngularDotColor(_ellipse01, _AngularDotBrush01, center);
+            UpdateAngularDotColor(_ellipsePoint, _AngularDotBrushPoint, center);
+            UpdateAngularDotColor(_ellipse02, _AngularDotBrush02, center);
+            UpdateAngularDotColor(_ellipse03, _AngularDotBrush03, center);
         }
 
-        private void UpdateConicDotColor(Windows.UI.Xaml.Shapes.Shape ellipse, SolidColorBrush brush, Windows.Foundation.Point center)
+        private void UpdateAngularDotColor(Windows.UI.Xaml.Shapes.Shape ellipse, SolidColorBrush brush, Windows.Foundation.Point center)
         {
             if (ellipse == null || brush == null)
                 return;
@@ -472,7 +472,7 @@ namespace ProgressCircleGradientUWP.Controls.ProgressCircle
                 p = new Windows.Foundation.Point(0, 0);
             }
 
-            brush.Color = ConicGradientBrush.SampleColorAtPoint(p, center.X, center.Y);
+            brush.Color = AngularGradientBrush.SampleColorAtPoint(p, center.X, center.Y);
         }
 
         private void ApplyNormalDotBrushes()
